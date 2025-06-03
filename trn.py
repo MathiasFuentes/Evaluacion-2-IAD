@@ -16,6 +16,7 @@ Solo usa numpy, pandas y matplotlib.
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import math
 
 # ----------------------------------------
 # 1. Lectura de datos y división en train/test
@@ -30,7 +31,7 @@ y_all = df.iloc[:,  -1].values   # shape: (N_total,)
 N_total, m = X_all.shape
 
 # 1.3 Dividir 80% entrenamiento / 20% test SIN barajar
-n_train = int(0.8 * N_total)
+n_train = math.floor(0.8 * N_total)
 
 df_train = df.iloc[:n_train].reset_index(drop=True)
 df_test  = df.iloc[n_train:].reset_index(drop=True)
@@ -63,7 +64,12 @@ yc_full = y_train_full - mean_y_full         # shape: (n_train,)
 U_full, s_full, Vt_full = np.linalg.svd(Xc_full, full_matrices=False)
 
 # 3.2 Grid logarítmico de λ ∈ [10^-10, 10^10]
-lambdas = np.logspace(-10, 10, num=200)
+cfg = pd.read_csv("cfg_lambda.csv").iloc[0]
+lambda_min = cfg["Lambda_min"]
+lambda_max = cfg["Lambda_max"]
+cantidad_lambdas = int(cfg["Cantidad_Lambda"])
+
+lambdas = np.logspace(np.log10(lambda_min), np.log10(lambda_max), num=cantidad_lambdas)
 
 def compute_gcv_fixed(lambda_val, U, s, y_cent, n_samples):
     """
@@ -85,9 +91,10 @@ gcv_vals = np.array([
 
 # 3.4 Seleccionar λ_opt que minimiza GCV
 idx_opt = np.argmin(gcv_vals)
-lambda_opt = lambdas[idx_opt]
+lambda_opt = float(lambdas[idx_opt])
 
-print(f"λ óptimo (GCV corregido) = {lambda_opt:.4f}")
+print(f"[INFO] λ óptimo encontrado por GCV: {lambda_opt:.4f} con {len(lambdas)} candidatos evaluados.")
+
 
 
 # ----------------------------------------
